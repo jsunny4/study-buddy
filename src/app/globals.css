@@ -3,19 +3,284 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --primary-color: #3b82f6;
+  --primary-hover: #2563eb;
+  --secondary-color: #10b981;
+  --secondary-hover: #059669;
+  --danger-color: #ef4444;
+  --danger-hover: #dc2626;
+  --background-color: #f3f4f6;
+  --card-background: #ffffff;
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Base styles */
+body {
+  background-color: var(--background-color);
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+
+/* Container */
+.container {
+  @apply px-4 mx-auto;
+  max-width: 1200px;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  @apply font-bold text-gray-900;
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+/* Card styling */
+.card {
+  @apply bg-white rounded-lg shadow p-6;
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* Button styling */
+.btn {
+  @apply px-4 py-2 rounded-md font-medium;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  @apply text-white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--primary-hover);
+}
+
+.btn-secondary {
+  background-color: var(--secondary-color);
+  @apply text-white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: var(--secondary-hover);
+}
+
+.btn-danger {
+  background-color: var(--danger-color);
+  @apply text-white;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background-color: var(--danger-hover);
+}
+
+/* Input and textarea styling */
+.input, .textarea {
+  @apply w-full p-2 border rounded-md;
+  transition: all 0.2s ease-in-out;
+}
+
+.input:focus, .textarea:focus {
+  @apply outline-none ring-2 ring-blue-500 border-blue-500;
+}
+
+.input:hover, .textarea:hover {
+  @apply border-blue-300;
+}
+
+/* Flashcard styling */
+.flashcard {
+  @apply min-h-[200px] flex items-center justify-center p-6 border rounded-lg cursor-pointer bg-white;
+  perspective: 1000px;
+  transition: all 0.3s ease-in-out;
+}
+
+.flashcard:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Tab styling */
+.tab-container {
+  @apply flex gap-2 mb-6 overflow-x-auto pb-2;
+  scrollbar-width: thin;
+}
+
+.tab {
+  @apply flex items-center gap-2 px-4 py-2 rounded-lg transition-colors;
+  white-space: nowrap;
+}
+
+.tab.active {
+  background-color: var(--primary-color);
+  @apply text-white;
+}
+
+.tab:not(.active) {
+  @apply bg-gray-100 hover:bg-gray-200 text-black;
+}
+
+/* Modal/Dialog styling */
+.modal-overlay {
+  @apply fixed inset-0 bg-black/50 flex items-center justify-center z-50;
+  transform: translateZ(0); /* Forces GPU acceleration */
+}
+
+.modal-content {
+  @apply bg-white p-6 rounded-lg shadow-xl w-full max-w-md mx-4;
+  transform: translateZ(0); /* Forces GPU acceleration */
+}
+
+.input-wrapper {
+  @apply relative;
+}
+
+.dialog-input {
+  @apply w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 border-gray-300;
+}
+
+/* Logo styling */
+.logo-text {
+  @apply text-4xl font-bold relative inline-flex items-center;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.logo-text::before {
+  content: "📚";
+  @apply mr-2;
+  -webkit-text-fill-color: initial;
+  font-size: 0.9em;
+}
+
+.logo-container {
+  @apply relative inline-block;
+  animation: logo-appear 1s ease-out;
+}
+
+@keyframes logo-appear {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+@keyframes overlay-appear {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Loading state */
+.loading {
+  @apply opacity-75 cursor-not-allowed;
+  pointer-events: none;
+}
+
+/* Error message styling */
+.error-message {
+  @apply text-red-500 text-sm mt-1;
+  animation: shake 0.5s ease-in-out;
+}
+
+/* Range input styling */
+input[type="range"] {
+  @apply w-full;
+  height: 6px;
+  background: #ddd;
+  border-radius: 3px;
+  appearance: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  @apply bg-blue-500;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.2s ease-in-out;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  @apply bg-blue-600;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100 rounded;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-400 rounded;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-500;
+}
+
+/* Animations */
+@keyframes modal-appear {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .container {
+    @apply px-4;
+  }
+
+  .card {
+    @apply p-4;
+  }
+
+  .flashcard {
+    @apply min-h-[150px];
+  }
+
+  .tab {
+    @apply px-3 py-1 text-sm;
+  }
+
+  .modal-content {
+    @apply mx-4;
+  }
 }

@@ -21,10 +21,10 @@ const FlashcardCreator: React.FC<FlashcardCreatorProps> = ({
   const [isFlipped, setIsFlipped] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
-  const [showSaveDialog, setShowSaveDialog] = useState<boolean>(false);
   const [deckName, setDeckName] = useState<string>('');
   const [cardCount, setCardCount] = useState<number>(5);
   const [isStudyMode, setIsStudyMode] = useState<boolean>(false);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
 
   useEffect(() => {
     if (initialDeck) {
@@ -58,20 +58,13 @@ const FlashcardCreator: React.FC<FlashcardCreatorProps> = ({
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          notes,
-          cardCount // Send the cardCount to the API
-        }),
+        body: JSON.stringify({ notes, cardCount }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
         throw new Error(data.details || data.error || 'Failed to generate flashcards');
-      }
-
-      if (!data.flashcards || !Array.isArray(data.flashcards)) {
-        throw new Error('Invalid response format');
       }
 
       const cardsWithIds = data.flashcards.map((card: Omit<Flashcard, 'id'>) => ({
@@ -90,6 +83,17 @@ const FlashcardCreator: React.FC<FlashcardCreatorProps> = ({
     }
   };
 
+  const handleSaveDeck = () => {
+    if (!deckName.trim()) {
+      setError('Please enter a deck name');
+      return;
+    }
+    onSaveDeck(deckName.trim(), flashcards);
+    setDeckName('');
+    setIsSaving(false);
+    setError('');
+  };
+
   const nextCard = () => {
     setIsFlipped(false);
     setCurrentCard((prev) => (prev + 1) % flashcards.length);
@@ -100,71 +104,25 @@ const FlashcardCreator: React.FC<FlashcardCreatorProps> = ({
     setCurrentCard((prev) => (prev - 1 + flashcards.length) % flashcards.length);
   };
 
-  const SaveDeckDialog = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div 
-        className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full"
-        onClick={e => e.stopPropagation()}
-      >
-        <h3 className="text-xl font-bold mb-4 text-black">Save Flashcard Deck</h3>
-        <input
-          type="text"
-          value={deckName}
-          onChange={e => setDeckName(e.target.value)}
-          placeholder="Enter deck name"
-          className="w-full p-2 border rounded-md mb-4 text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
-          autoFocus
-        />
-        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-        <div className="flex justify-end gap-2">
-          <button
-            onClick={() => {
-              setShowSaveDialog(false);
-              setDeckName('');
-              setError('');
-            }}
-            className="px-4 py-2 border rounded-md hover:bg-gray-50 text-black"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => {
-              if (!deckName.trim()) {
-                setError('Please enter a deck name');
-                return;
-              }
-              onSaveDeck(deckName, flashcards);
-              setDeckName('');
-              setShowSaveDialog(false);
-            }}
-            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-          >
-            Save
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <div className="space-y-6">
       {!isStudyMode ? (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4 text-black">Create Flashcards</h2>
+        <div className="card">
+          <h2 className="text-xl font-semibold mb-4">Create Flashcards</h2>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-2 text-black">
+              <label className="block text-sm font-medium mb-2">
                 Enter your study notes
               </label>
               <textarea
-                className="w-full h-32 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                className="textarea"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Paste your study notes here..."
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2 text-black">
+              <label className="block text-sm font-medium mb-2">
                 Number of flashcards to generate (5-30)
               </label>
               <div className="flex items-center gap-2">
@@ -176,41 +134,29 @@ const FlashcardCreator: React.FC<FlashcardCreatorProps> = ({
                   onChange={(e) => setCardCount(Number(e.target.value))}
                   className="flex-1"
                 />
-                <span className="text-black font-medium w-12 text-center">
+                <span className="font-medium w-12 text-center">
                   {cardCount}
                 </span>
               </div>
             </div>
-            {error && (
-              <p className="text-red-500 text-sm">{error}</p>
-            )}
-            <div className="flex gap-2">
-              <button
-                onClick={generateFlashcards}
-                disabled={isLoading}
-                className="flex-1 bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors disabled:bg-blue-300 disabled:cursor-not-allowed"
-              >
-                {isLoading ? 'Generating...' : 'Generate Flashcards'}
-              </button>
-              {flashcards.length > 0 && (
-                <button
-                  onClick={() => setShowSaveDialog(true)}
-                  className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
-                >
-                  Save Deck
-                </button>
-              )}
-            </div>
+            {error && <p className="error-message">{error}</p>}
+            <button
+              onClick={generateFlashcards}
+              disabled={isLoading}
+              className={`btn btn-primary w-full ${isLoading ? 'loading' : ''}`}
+            >
+              {isLoading ? 'Generating...' : 'Generate Flashcards'}
+            </button>
           </div>
         </div>
       ) : (
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-black">
+          <h2 className="text-xl font-semibold">
             Studying: {initialDeck?.name}
           </h2>
           <button
             onClick={onExitStudy}
-            className="px-3 py-1 text-gray-600 hover:text-gray-800 flex items-center gap-1"
+            className="btn"
           >
             <X className="h-4 w-4" /> Exit Study
           </button>
@@ -218,43 +164,71 @@ const FlashcardCreator: React.FC<FlashcardCreatorProps> = ({
       )}
 
       {flashcards.length > 0 && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <div 
-            className="min-h-[200px] flex items-center justify-center p-6 border rounded-lg cursor-pointer hover:bg-gray-50"
-            onClick={() => setIsFlipped(!isFlipped)}
-          >
-            <p className="text-xl text-center text-black">
-              {isFlipped 
-                ? flashcards[currentCard].answer 
-                : flashcards[currentCard].question}
-            </p>
-          </div>
-          <div className="flex justify-between mt-4">
-            <button 
+        <>
+          <div className="card">
+            <div 
+              className="flashcard"
               onClick={() => setIsFlipped(!isFlipped)}
-              className="px-4 py-2 border rounded-md hover:bg-gray-50 text-black"
             >
-              Flip Card
-            </button>
-            <div className="flex gap-2">
-              <button
-                onClick={previousCard}
-                className="px-4 py-2 border rounded-md hover:bg-gray-50 text-black"
-              >
-                Previous
-              </button>
+              <p className="text-xl text-center">
+                {isFlipped 
+                  ? flashcards[currentCard].answer 
+                  : flashcards[currentCard].question}
+              </p>
+            </div>
+            <div className="flex justify-between mt-4">
               <button 
-                onClick={nextCard}
-                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                onClick={() => setIsFlipped(!isFlipped)}
+                className="btn"
               >
-                Next ({currentCard + 1}/{flashcards.length})
+                Flip Card
               </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={previousCard}
+                  className="btn"
+                >
+                  Previous
+                </button>
+                <button 
+                  onClick={nextCard}
+                  className="btn btn-primary"
+                >
+                  Next ({currentCard + 1}/{flashcards.length})
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
 
-      {showSaveDialog && <SaveDeckDialog />}
+          {!isStudyMode && (
+            <div className="card bg-gray-50">
+              <div className="flex items-end gap-4">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium mb-2">
+                    Deck Name
+                  </label>
+                  <input
+                    type="text"
+                    value={deckName}
+                    onChange={(e) => setDeckName(e.target.value)}
+                    placeholder="Enter a name for your deck"
+                    className="input"
+                  />
+                </div>
+                <button
+                  onClick={handleSaveDeck}
+                  className="btn btn-secondary"
+                  disabled={!deckName.trim()}
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Deck
+                </button>
+              </div>
+              {error && <p className="error-message mt-2">{error}</p>}
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 };
