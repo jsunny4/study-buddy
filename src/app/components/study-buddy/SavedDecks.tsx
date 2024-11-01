@@ -4,11 +4,12 @@ import React, { useState } from 'react';
 import { Deck, Flashcard } from './types';
 import { BookOpen, Trash, Edit, X, Plus, Save } from 'lucide-react';
 
+// Props interface defining the component's required properties
 interface SavedDecksProps {
-  decks: Deck[];
-  onLoadDeck: (deck: Deck) => void;
-  onDeleteDeck: (deck: Deck) => void;
-  onUpdateDeck: (updatedDeck: Deck) => void;
+  decks: Deck[];                           // Array of saved decks
+  onLoadDeck: (deck: Deck) => void;        // Handler for loading a deck to study
+  onDeleteDeck: (deck: Deck) => void;      // Handler for deleting a deck
+  onUpdateDeck: (updatedDeck: Deck) => void; // Handler for updating a deck
 }
 
 const SavedDecks: React.FC<SavedDecksProps> = ({ 
@@ -17,42 +18,52 @@ const SavedDecks: React.FC<SavedDecksProps> = ({
   onDeleteDeck,
   onUpdateDeck
 }) => {
-  const [editingDeckId, setEditingDeckId] = useState<string | null>(null);
-  const [editingDeck, setEditingDeck] = useState<Deck | null>(null);
-  const [newCard, setNewCard] = useState({ question: '', answer: '' });
-  const [error, setError] = useState<string>('');
+  // State management for deck editing
+  const [editingDeckId, setEditingDeckId] = useState<string | null>(null);  // Currently editing deck ID
+  const [editingDeck, setEditingDeck] = useState<Deck | null>(null);        // Deck being edited
+  const [newCard, setNewCard] = useState({ question: '', answer: '' });     // New card form state
+  const [error, setError] = useState<string>('');                           // Error message state
 
+  // Start editing a deck
   const startEditing = (deck: Deck) => {
     setEditingDeckId(deck.name);
+    // Create a deep copy of the deck with new IDs for the cards
     setEditingDeck({
       ...deck,
-      flashcards: deck.flashcards.map(card => ({ ...card, id: Math.random().toString(36).substr(2, 9) }))
+      flashcards: deck.flashcards.map(card => ({ 
+        ...card, 
+        id: Math.random().toString(36).substr(2, 9) 
+      }))
     });
     setError('');
   };
 
+  // Cancel editing with unsaved changes check
   const cancelEditing = () => {
     if (hasUnsavedChanges()) {
       if (!confirm('You have unsaved changes. Are you sure you want to cancel?')) {
         return;
       }
     }
+    // Reset all editing state
     setEditingDeckId(null);
     setEditingDeck(null);
     setNewCard({ question: '', answer: '' });
     setError('');
   };
 
+  // Check for unsaved changes
   const hasUnsavedChanges = () => {
     const originalDeck = decks.find(deck => deck.name === editingDeckId);
     if (!originalDeck || !editingDeck) return false;
     return JSON.stringify(originalDeck.flashcards) !== JSON.stringify(editingDeck.flashcards);
   };
 
+  // Save changes to a deck
   const handleSaveChanges = () => {
     if (!editingDeck) return;
 
-    // Validate that no cards are empty
+    // Validate cards
     const hasEmptyCards = editingDeck.flashcards.some(
       card => !card.question.trim() || !card.answer.trim()
     );
@@ -62,6 +73,7 @@ const SavedDecks: React.FC<SavedDecksProps> = ({
       return;
     }
 
+    // Update deck and reset state
     onUpdateDeck(editingDeck);
     setEditingDeckId(null);
     setEditingDeck(null);
@@ -69,12 +81,14 @@ const SavedDecks: React.FC<SavedDecksProps> = ({
     setError('');
   };
 
+  // Add a new card to the deck being edited
   const addNewCard = () => {
     if (!editingDeck || !newCard.question.trim() || !newCard.answer.trim()) {
       setError('Please fill in both question and answer');
       return;
     }
     
+    // Add new card with unique ID
     setEditingDeck({
       ...editingDeck,
       flashcards: [
@@ -85,14 +99,18 @@ const SavedDecks: React.FC<SavedDecksProps> = ({
         }
       ]
     });
+    // Reset new card form
     setNewCard({ question: '', answer: '' });
     setError('');
   };
 
+  // Remove a card with confirmation
   const removeCard = (cardId: string, cardQuestion: string) => {
     if (!editingDeck) return;
 
-    const shouldDelete = confirm(`Are you sure you want to delete this flashcard?\n\nQuestion: ${cardQuestion}`);
+    const shouldDelete = confirm(
+      `Are you sure you want to delete this flashcard?\n\nQuestion: ${cardQuestion}`
+    );
     
     if (shouldDelete) {
       setEditingDeck({
@@ -102,6 +120,7 @@ const SavedDecks: React.FC<SavedDecksProps> = ({
     }
   };
 
+  // Update a card's content
   const updateCard = (cardId: string, field: 'question' | 'answer', value: string) => {
     if (!editingDeck) return;
 
@@ -115,14 +134,16 @@ const SavedDecks: React.FC<SavedDecksProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* Map through all decks */}
       {decks.map((deck) => (
         <div 
           key={deck.name}
           className="card"
         >
           {editingDeckId === deck.name ? (
-            // Editing Mode
+            // Editing Mode UI
             <div className="space-y-6">
+              {/* Header with save/cancel buttons */}
               <div className="flex justify-between items-center">
                 <h3 className="text-xl font-semibold">Editing: {deck.name}</h3>
                 <div className="flex gap-2">
@@ -143,7 +164,7 @@ const SavedDecks: React.FC<SavedDecksProps> = ({
                 </div>
               </div>
 
-              {/* Add New Card Section */}
+              {/* Add New Card Form */}
               <div className="bg-gray-50 p-4 rounded-lg">
                 <h4 className="font-medium mb-3">Add New Card</h4>
                 <div className="grid gap-3">
@@ -152,7 +173,10 @@ const SavedDecks: React.FC<SavedDecksProps> = ({
                       type="text"
                       placeholder="Enter question"
                       value={newCard.question}
-                      onChange={e => setNewCard(prev => ({ ...prev, question: e.target.value }))}
+                      onChange={e => setNewCard(prev => ({ 
+                        ...prev, 
+                        question: e.target.value 
+                      }))}
                       className="input"
                     />
                   </div>
@@ -161,7 +185,10 @@ const SavedDecks: React.FC<SavedDecksProps> = ({
                       type="text"
                       placeholder="Enter answer"
                       value={newCard.answer}
-                      onChange={e => setNewCard(prev => ({ ...prev, answer: e.target.value }))}
+                      onChange={e => setNewCard(prev => ({ 
+                        ...prev, 
+                        answer: e.target.value 
+                      }))}
                       className="input"
                     />
                   </div>
@@ -177,14 +204,17 @@ const SavedDecks: React.FC<SavedDecksProps> = ({
                 </div>
               </div>
 
-              {/* Edit Existing Cards */}
+              {/* Edit Existing Cards List */}
               <div className="space-y-4">
-                <h4 className="font-medium">Flashcards ({editingDeck?.flashcards.length})</h4>
+                <h4 className="font-medium">
+                  Flashcards ({editingDeck?.flashcards.length})
+                </h4>
                 {editingDeck?.flashcards.map((card, index) => (
                   <div 
                     key={card.id}
                     className="bg-white border rounded-lg p-4 space-y-3"
                   >
+                    {/* Card Question */}
                     <div>
                       <label className="block text-sm font-medium mb-1">
                         Question {index + 1}
@@ -196,6 +226,7 @@ const SavedDecks: React.FC<SavedDecksProps> = ({
                         className="input"
                       />
                     </div>
+                    {/* Card Answer */}
                     <div>
                       <label className="block text-sm font-medium mb-1">
                         Answer {index + 1}
@@ -207,6 +238,7 @@ const SavedDecks: React.FC<SavedDecksProps> = ({
                         className="input"
                       />
                     </div>
+                    {/* Remove Card Button */}
                     <div className="flex justify-end">
                       <button
                         onClick={() => removeCard(card.id, card.question)}
@@ -221,15 +253,17 @@ const SavedDecks: React.FC<SavedDecksProps> = ({
               </div>
             </div>
           ) : (
-            // View Mode
+            // View Mode UI
             <div>
               <div className="flex justify-between items-center">
+                {/* Deck Info */}
                 <div>
                   <h3 className="font-medium text-lg">{deck.name}</h3>
                   <p className="text-sm text-gray-500">
                     {deck.flashcards.length} cards • Created {new Date(deck.createdAt).toLocaleDateString()}
                   </p>
                 </div>
+                {/* Action Buttons */}
                 <div className="flex gap-2">
                   <button
                     onClick={() => onLoadDeck(deck)}
@@ -247,7 +281,9 @@ const SavedDecks: React.FC<SavedDecksProps> = ({
                   </button>
                   <button
                     onClick={() => {
-                      if (confirm(`Are you sure you want to delete "${deck.name}"?\nThis will permanently delete all flashcards in this deck.`)) {
+                      if (confirm(
+                        `Are you sure you want to delete "${deck.name}"?\nThis will permanently delete all flashcards in this deck.`
+                      )) {
                         onDeleteDeck(deck);
                       }
                     }}
@@ -263,6 +299,7 @@ const SavedDecks: React.FC<SavedDecksProps> = ({
         </div>
       ))}
       
+      {/* Empty State */}
       {decks.length === 0 && (
         <p className="text-center text-gray-500">No saved decks yet</p>
       )}
